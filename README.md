@@ -28,13 +28,20 @@ The script resolves both IPv4 and IPv6, but supports only IPv4 hosts for IKEv2 d
 
 > n3iwf.5gc.mcc<_mcc_>.mnc<_mnc_>.pub.3gppnetwork.org
 
-# Dependencies
+# Installation (venv)
+
+Install python >3.8 if not in the system. Then also install
+
+```
+sudo apt install python3.8-venv
+sudo apt install python3-wheel 
+```
 
 Install dependencies:
 ```
 python3 -m venv .venv
-source .venv/bin/actiate
-pip3 install < requirements.txt
+source .venv/bin/activate
+pip3 install -r requirements.txt
 ```
 
 Fetch the network list:
@@ -44,7 +51,8 @@ Fetch the network list:
 
 ## Usage
 ```
-sudo .venv/bin/python3 vowifi_scanner.py <network-list> <output-file>
+sudo ./vowifi_scanner.py <network-list> <output-file>
 ```
+This will take a while.
 
 Note that the ePDG/N3IWF address of some operators is resolved, but it does not respond to neither ICMP nor IKEv2_SA_INIT messages. This could mean that the service is off, geoblocked, or does not like the received request and drops it (if it is an IKEv2 one, specially). 
