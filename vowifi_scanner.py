@@ -103,7 +103,8 @@ def connect(mcc: str, mnc: str, timeout: int = 5):
     dns_query_result = nslookup(operator_url)
     if len(dns_query_result) == 0 :
         # lookup failed
-        return result
+        #return result
+        return None
 
     # lookup successful; try to connect
     for record in dns_query_result:
@@ -133,8 +134,10 @@ def main(args):
     with Pool(8) as p:
         results = p.map(connect_s, operators)
 
+    filtered_results = [result for result in results if result is not None]
+
     with open(args.out_file, "w") as fh:
-        print(json.dumps(results, indent=2), file=fh)
+        print(json.dumps(filtered_results, indent=2), file=fh)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -142,3 +145,4 @@ if __name__ == '__main__':
     parser.add_argument('out_file', type = str, help = 'output file (CVS)')
     args = parser.parse_args()
     main(args)
+
