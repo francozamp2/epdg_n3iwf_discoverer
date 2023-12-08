@@ -1,9 +1,10 @@
-# ePDG discoverer
+# ePDG + N3IWF discoverer
 Resolves the IP addresses of ePDGs or N3IWFs from most mobile operators in the world and checks if each responds to ICMP and whether it accepts IKEv2 connection.
 
 ---
 ---
 This is a fork from https://github.com/mrlnc/epdg_discoverer by @mrlnc 
+
 Note: the original code by @Spinlogic is available here: https://github.com/Spinlogic/epdg_discoverer
 
 My repo introduces checks for N3IWF (5G)
