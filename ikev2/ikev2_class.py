@@ -60,10 +60,10 @@ class epdg_ikev2(object):
         transform_5 = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'GroupDesc', transform_id = 2)
         #We use DH type 14 in the key exchange. But if are also announcing DH type 16 and 18, Server can reply back INVALID_KE_PAYLOAD 
         #to make us use higher values (typically 16). Re-check.
-        #transform_5a = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'GroupDesc', transform_id = 16)
-        #transform_5b = IKEv2_payload_Transform(next_payload = 'last', transform_type = 'GroupDesc', transform_id = 18)
-        transform_5a = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'GroupDesc', transform_id = 14)
-        transform_5b = IKEv2_payload_Transform(next_payload = 'last', transform_type = 'GroupDesc', transform_id = 14)
+        transform_5a = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'GroupDesc', transform_id = 16)
+        transform_5b = IKEv2_payload_Transform(next_payload = 'last', transform_type = 'GroupDesc', transform_id = 18)
+        #transform_5a = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'GroupDesc', transform_id = 14)
+        #transform_5b = IKEv2_payload_Transform(next_payload = 'last', transform_type = 'GroupDesc', transform_id = 14)
         packet = IP(dst = self.dst_addr, proto = 'udp') /\
             UDP(sport = sport, dport = dport) /\
             IKEv2(init_SPI = self.i_spi, next_payload = 'SA', exch_type = 'IKE_SA_INIT', flags='Initiator') /\

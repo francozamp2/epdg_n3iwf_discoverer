@@ -7,7 +7,7 @@ This is a fork from https://github.com/mrlnc/epdg_discoverer by @mrlnc
 
 Note: the original code by @Spinlogic is available here: https://github.com/Spinlogic/epdg_discoverer
 
-My repo introduces checks for N3IWF (5G)
+My repo introduces several improvements and checks for N3IWF as well (5G)
 
 ---
 ---
@@ -51,8 +51,9 @@ Fetch the network list:
 
 ## Usage
 ```
-sudo ./vowifi_scanner.py <network-list> <output-file>
+sudo ./vowifi_scanner.py <network-list> <output-file> [5g]
 ```
-This will take a while.
 
-Note that the ePDG/N3IWF address of some operators is resolved, but it does not respond to neither ICMP nor IKEv2_SA_INIT messages. This could mean that the service is off, geoblocked, or does not like the received request and drops it (if it is an IKEv2 one, specially). 
+Appending 5g at the end of the command, will switch from ePDG to N3IWF scan. This will take a while as the script will check all operators in the network-list CSV file (at present 2970 entries).
+
+Note that the ePDG/N3IWF address of some operators is resolved, but it does not respond to neither ICMP nor IKEv2_SA_INIT messages. This could mean that the service is off, geoblocked, or does not like the received request (i.e., unsupported ENCR/PRF/INTEG/D-H proposals or keys in IKEv2_SA_INIT, or firewall with rate limits) and drops it. Now the IKEv2_SA_INIT is improved to reduce missing responses, reflecting the same message from a Xiaomi phone. 

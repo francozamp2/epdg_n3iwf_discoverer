@@ -26,16 +26,17 @@
 #################################################################
 #
 # Module : vowifi_scanner.py
-# Author : Juan Noguera
+# Author : Juan Noguera. Francesco Zampognaro: improvemewnt of IKE_SA_INIT, showing only
+#          active entries (with DNS); support to 5G.
 # Purpose: This script goes through the list of operators in 
 #          file declared as parameter and finds whether there
 #          is a DNS entry for the ePDG of each operator.
 #          
 # Input:  file generated from http://www.imei.info/operator-codes/
 #
-# Output: csv file with the following columns:
+# Output: json file with the following contents:
 #
-#    Country   Operator_Name  FQDN_for_ePDG   Resolved_IP_Address   Responds to ping?   length of response to IKEv2_SA_INIT
+#   Operator_Name   MNC/MCC   FQDN (ePDG or N3IWF)  Resolved_IP_Addresses   Responds to ping?   length of response to IKEv2_SA_INIT
 #
 #   One entry per IP Address resolved. I.e. if the FQDN of an 
 #   operator resolves to multiple IP Addresses, then this 
@@ -43,9 +44,9 @@
 #
 #################################################################
 
-"""Usage: vowifi_scanner <operators_filename> <output_filename>"""
+"""Usage: vowifi_scanner <operators_filename> <output_filename> [5g]"""
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 import argparse, random, dns.resolver
 import ikev2.ikev2_class as ikev2
@@ -54,6 +55,7 @@ from multiprocessing import Pool
 from scapy.all import sr1, IPv6, IP, ICMP, ICMPv6EchoRequest
 
 TIMEOUT = 1
+mode = ''
 
 def nslookup(operator_url: str) -> bool:
     """"Performs DNS lookup for A (IPv4) and AAAA (IPv6) records"""
@@ -88,12 +90,17 @@ def connect_s(op):
     return connect(op["MCC"], op["MNC"], op["Network"], TIMEOUT)
 
 def connect(mcc: str, mnc: str, name: str, timeout: int = 2):
+
+    global mode
     if len(mcc) != 3 or len(mnc) != 3:
         print(f"Incorrect length for MCC {mcc} or MNC {mnc} (should be 3 characters)")
         return None
 
-    operator_url = f"epdg.epc.mnc{mnc}.mcc{mcc}.pub.3gppnetwork.org"
-    #operator_url = f"n3iwf.5gc.mnc{mnc}.mcc{mcc}.pub.3gppnetwork.org"
+    if (mode == '5g'):
+        operator_url = f"n3iwf.5gc.mnc{mnc}.mcc{mcc}.pub.3gppnetwork.org"
+    else:
+        operator_url = f"epdg.epc.mnc{mnc}.mcc{mcc}.pub.3gppnetwork.org"
+    
     result = {
         "MNO": name,
         "mcc": mcc,
@@ -125,6 +132,11 @@ def connect(mcc: str, mnc: str, name: str, timeout: int = 2):
     return result
 
 def main(args):
+    global mode
+    if (args.mode == '5g'):
+        mode='5g'
+        print('set mode to 5g')
+
     operators = []
     with open(args.operators_file) as f:
         reader = csv.DictReader(f, quoting=csv.QUOTE_NONE)
@@ -143,8 +155,9 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('operators_file', type = str, help = 'File with list of operators and their data')
-    parser.add_argument('out_file', type = str, help = 'output file (CVS)')
+    parser.add_argument('operators_file', type = str, help = 'CSV file with list of operators and their data')
+    parser.add_argument('out_file', type = str, help = 'output file (JSON)')
+    parser.add_argument('mode', type = str, nargs='?', default='4g', help = '5g = scanning N3IWF instead than ePDF')
     args = parser.parse_args()
     main(args)
 
