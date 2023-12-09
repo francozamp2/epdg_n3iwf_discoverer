@@ -25,10 +25,10 @@ class epdg_ikev2(object):
         self.i_spi_esp = binascii.unhexlify(eutils.RandHexString(8))
         self.dst_addr = ip_dst
         self.src_addr = eutils.GetIp()
-        self.transform_set = {'encrypt': 12, 'prf': 2, 'integr': 2, 'group': 2}
-        self.dh = DiffieHellman(group = 2, key_length = 256)
+        self.transform_set = {'encrypt': 12, 'prf': 2, 'integr': 2, 'group': 4}
+        self.dh = DiffieHellman(group = 14, key_length = 256)
         self.dh.generate_public_key()
-        self.i_n = binascii.unhexlify(eutils.RandHexString(32))
+        self.i_n = binascii.unhexlify(eutils.RandHexString(40))
 
 
     def sa_init(self, sport, dport, analyse_response = False):
@@ -46,17 +46,33 @@ class epdg_ikev2(object):
         nat_det_src = binascii.unhexlify(hashlib.sha1(self.i_spi + self.r_spi + ip_src + src_port).hexdigest())
         nat_det_dst = binascii.unhexlify(hashlib.sha1(self.i_spi + self.r_spi + ip_dst + dst_port).hexdigest())
         transform_1 = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'Encryption', transform_id = 12, length = 12, key_length = 128) 
-        transform_2 = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'PRF', transform_id = 2)
-        transform_3 = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'Integrity', transform_id = 2)
-        transform_4 = IKEv2_payload_Transform(next_payload = 'last', transform_type = 'GroupDesc', transform_id = 2)
+        transform_1a = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'Encryption', transform_id = 12, length = 12, key_length = 256) 
+        transform_1b = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'Encryption', transform_id = 13, length = 12, key_length = 128)
+        transform_1c = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'Encryption', transform_id = 13, length = 12, key_length = 256) 
+        transform_2 = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'PRF', transform_id = 7)
+        transform_2a = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'PRF', transform_id = 1)
+        transform_2b = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'PRF', transform_id = 5)
+        transform_2c = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'PRF', transform_id = 6)
+        transform_3 = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'Integrity', transform_id = 14)
+        transform_3a = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'Integrity', transform_id = 12)
+        transform_3b = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'Integrity', transform_id = 13)
+        transform_4 = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'GroupDesc', transform_id = 14)
+        transform_5 = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'GroupDesc', transform_id = 2)
+        #We use DH type 14 in the key exchange. But if are also announcing DH type 16 and 18, Server can reply back INVALID_KE_PAYLOAD 
+        #to make us use higher values (typically 16). Re-check.
+        #transform_5a = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'GroupDesc', transform_id = 16)
+        #transform_5b = IKEv2_payload_Transform(next_payload = 'last', transform_type = 'GroupDesc', transform_id = 18)
+        transform_5a = IKEv2_payload_Transform(next_payload = 'Transform', transform_type = 'GroupDesc', transform_id = 14)
+        transform_5b = IKEv2_payload_Transform(next_payload = 'last', transform_type = 'GroupDesc', transform_id = 14)
         packet = IP(dst = self.dst_addr, proto = 'udp') /\
             UDP(sport = sport, dport = dport) /\
             IKEv2(init_SPI = self.i_spi, next_payload = 'SA', exch_type = 'IKE_SA_INIT', flags='Initiator') /\
-            IKEv2_payload_SA(next_payload = 'KE', prop = IKEv2_payload_Proposal(trans_nb = 4, trans = transform_1 / transform_2 / transform_3 / transform_4, )) /\
-            IKEv2_payload_KE(next_payload = 'Nonce', group = '1024MODPgr', load = self.dh.public_key_bytes) /\
+            IKEv2_payload_SA(next_payload = 'KE', prop = IKEv2_payload_Proposal(trans_nb = 15, trans = transform_1 / transform_1a /transform_1b / transform_1c / transform_2 / transform_2a / transform_2b / transform_2c /transform_3 / transform_3a / transform_3b / transform_4 / transform_5 / transform_5a / transform_5b, )) /\
+            IKEv2_payload_KE(next_payload = 'Nonce', group = '2048MODPgr', load = self.dh.public_key_bytes) /\
             IKEv2_payload_Nonce(next_payload = 'Notify', load = self.i_n) /\
             IKEv2_payload_Notify(next_payload = 'Notify', type = 16388, load = nat_det_src) /\
-            IKEv2_payload_Notify(next_payload = 'None', type = 16389, load = nat_det_dst)
+            IKEv2_payload_Notify(next_payload = 'Notify', type = 16389, load = nat_det_dst)/\
+            IKEv2_payload_Notify(next_payload = 'None', type = 16430, load = "")
         ans = sr1(packet, timeout = 3, verbose = 0)
         if ans == None:
             return 0

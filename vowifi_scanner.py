@@ -85,15 +85,17 @@ def respondsToPing(address: str, timeout: int = 5) -> bool:
 
 # single-argument for multiprocessing map()
 def connect_s(op):
-    return connect(op["MCC"], op["MNC"], TIMEOUT)
+    return connect(op["MCC"], op["MNC"], op["Network"], TIMEOUT)
 
-def connect(mcc: str, mnc: str, timeout: int = 5):
+def connect(mcc: str, mnc: str, name: str, timeout: int = 2):
     if len(mcc) != 3 or len(mnc) != 3:
         print(f"Incorrect length for MCC {mcc} or MNC {mnc} (should be 3 characters)")
         return None
 
     operator_url = f"epdg.epc.mnc{mnc}.mcc{mcc}.pub.3gppnetwork.org"
+    #operator_url = f"n3iwf.5gc.mnc{mnc}.mcc{mcc}.pub.3gppnetwork.org"
     result = {
+        "MNO": name,
         "mcc": mcc,
         "mnc": mnc,
         "url": operator_url,
